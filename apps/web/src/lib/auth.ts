@@ -8,14 +8,17 @@ import { FetchOptions } from "./types";
 export const refreshToken = async (oldRefToken: string) => {
   try {
     const res = await fetch(`${B_URL}/auth/refresh`, {
-      method: "POST",
+      method: "GET",
       headers: {
         'Content-Type':'application/json',
         'authorization': `Bearer ${oldRefToken}`
       }
     })
 
-    if(!res.ok) {throw new Error('refreshToken - failed')}
+    if(!res.ok) {
+      console.log(res.statusText)
+      throw new Error('refreshToken - failed')
+    }
 
     const {accessToken, refreshToken} = await res.json()
 
@@ -31,7 +34,7 @@ export const refreshToken = async (oldRefToken: string) => {
 
     return accessToken
   } catch (err)  {
-    console.log('RefreshTokenFailed')
+    console.log('RefreshTokenFailed', err)
     return null
   }
 }
@@ -39,9 +42,11 @@ export const refreshToken = async (oldRefToken: string) => {
 export const authFetch = async (url: string |URL, options: FetchOptions = {}) => {
   const session = await getSession()
 
+  if (!session) throw new Error("Auth fetch - no session");
+
   options.headers = {
     ...options.headers,
-    Authorization: `Bearer ${session?.accessToken}`
+    Authorization: `Bearer ${session.accessToken}`
   }
 
   let response = await fetch(url, options)

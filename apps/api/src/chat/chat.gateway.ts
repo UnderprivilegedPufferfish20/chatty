@@ -37,11 +37,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   afterInit() {
     this.server.use(async (socket: Socket, next) => {
-      const userId = socket.handshake.auth.userId;
+      const token = socket.handshake.auth.token;
+      
+      if (!token) {
+        return next(new WsException('Missing authentication token'));
+      }
+
+      // Verify JWT token using your existing passport/JWT service
+      const decoded = this.jwtService.verify(token); // or however you verify JWTs
+      const userId = decoded.sub // depends on your 
 
       if (!userId) {
         return next(new WsException('Missing id or friendId'));
       }
+      
       try {
         const user = await this.userService.getUser({ id: userId })
         if (!user) return next(new WsException("User does not exist"));

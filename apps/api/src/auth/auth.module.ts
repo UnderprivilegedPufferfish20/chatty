@@ -17,6 +17,7 @@ import { UserModule } from 'src/user/user.module';
     ConfigModule.forFeature(googleOauthConfig),
     JwtModule.registerAsync(jwtConfig.asProvider()),
     ConfigModule.forFeature(jwtConfig),
+    JwtModule.registerAsync(refreshConfig.asProvider()),
     ConfigModule.forFeature(refreshConfig),
     UserModule
   ],
