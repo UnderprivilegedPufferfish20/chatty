@@ -52,7 +52,8 @@ export class UserService {
     return await prisma.user.create({
       data:{
         ...createUserDTO
-      }
+      },
+      include: {friends:true,friendsOf:true}
     })
   }
 

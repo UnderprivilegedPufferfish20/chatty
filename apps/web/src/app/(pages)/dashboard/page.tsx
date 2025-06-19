@@ -9,7 +9,6 @@ const page = async () => {
 
   return (
     <div>
-
       <div>Welcome {session.user.name}!</div>
       <Signout />
     </div>
