@@ -9,8 +9,38 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid())
-  name String @unique
-  email String @unique
-  pfpURL String
+  id        String           @id @default(uuid())
+  name      String           @unique
+  email     String           @unique
+  pfpURL    String
+
+  friends   FriendRelation[] @relation("UserFriends")
+  friendsOf FriendRelation[] @relation("FriendOfUser")
+}
+
+model FriendRelation {
+  id           String   @id @default(uuid())
+  userId       String
+  friendId     String
+  friendsSince DateTime @default(now())
+
+  user   User @relation("UserFriends", fields: [userId], references: [id])
+  friend User @relation("FriendOfUser", fields: [friendId], references: [id])
+  chats  Chat[]
+
+  @@unique([userId, friendId])
+}
+
+model Chat {
+  id           String   @id @default(uuid())
+  friendRelId  String
+  senderId     String
+  receiverId   String
+  message      String
+  sentAt       DateTime @default(now())
+  seen         Boolean
+  seenAt       DateTime?
+  attachment   Bytes? 
+
+  friendRel FriendRelation @relation(fields: [friendRelId], references: [id])
 }

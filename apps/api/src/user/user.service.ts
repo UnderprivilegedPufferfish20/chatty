@@ -8,7 +8,7 @@ export class UserService {
 
   async getUser(userQuery: FindUserQueryDTO) {
     async function getUserByEmail(email: string) {
-      const user = await prisma.user.findUnique({where:{email}})
+      const user = await prisma.user.findUnique({where:{email},include:{friends:true,friendsOf:true}})
 
       if (!user) return null
 
@@ -16,7 +16,7 @@ export class UserService {
     }
     
     async function getUserById(id: string) {
-      const user = await prisma.user.findUnique({where:{id}})
+      const user = await prisma.user.findUnique({where:{id},include:{friends:true,friendsOf:true}})
 
       if (!user) return null
 
@@ -24,7 +24,7 @@ export class UserService {
     }
 
     async function getUserByName(name: string) {
-      const user = await prisma.user.findUnique({where:{name}})
+      const user = await prisma.user.findUnique({where:{name},include:{friends:true,friendsOf:true}})
 
       if (!user) return null
 
