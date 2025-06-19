@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from "class-validator";
+import { IsEmail, IsOptional, IsString } from "class-validator";
 
 export class CreateUserDTO {
   @IsString()
@@ -9,4 +9,29 @@ export class CreateUserDTO {
 
   @IsString()
   pfpURL: string
+}
+
+export class UpdateUserDTO {
+  @IsOptional()
+  @IsString()
+  name?: string
+
+  @IsOptional()
+  @IsString()
+  pfpUrl?: string
+}
+
+export class FindUserQueryDTO {
+  @IsOptional()
+  @IsString()
+  name?: string
+
+  @IsOptional()
+  @IsString()
+  id?: string
+
+
+  @IsOptional()
+  @IsString()
+  email?: string
 }

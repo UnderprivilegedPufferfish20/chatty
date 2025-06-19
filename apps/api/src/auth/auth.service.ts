@@ -16,7 +16,7 @@ export class AuthService {
 
   async handleGoogleLogin(profile:any) {
 
-    let user = await this.userService.getUserByEmail(profile.email);
+    let user = await this.userService.getUser({email: profile.email});
 
     if (!user) {
       user = await this.userService.createUser({
@@ -54,7 +54,7 @@ export class AuthService {
 
 
   async validateRefreshToken(userId: string) {
-    const user = await this.userService.getUserById(userId)
+    const user = await this.userService.getUser({id: userId})
 
     if (!user) throw new UnauthorizedException('User not found')
 

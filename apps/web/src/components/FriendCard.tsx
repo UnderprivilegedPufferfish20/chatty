@@ -1,24 +1,3 @@
-
-// import {
-//   Card,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle,
-// } from "@/components/ui/card"
-
-// export function FriendCard({ name, latestChat, isOnline }: {name:string, latestChat:string, isOnline: boolean}) {
-//   return (
-//     <Card className="w-full max-w-sm flex flex-col gap-12">
-//       <CardHeader>
-//         <CardTitle className="mb-2">{name}</CardTitle>
-//         <CardDescription className="text-muted-foreground">
-//           {latestChat.length > 50 ? latestChat.slice(0, 50) + '...' : latestChat}
-//         </CardDescription>
-//       </CardHeader>
-//     </Card>
-//   )
-// }
-
 import {
   Card,
   CardDescription,
@@ -30,14 +9,14 @@ import Link from "next/link"
 export function FriendCard({ name, id, latestChat, isOnline }: {name:string, id:string, latestChat:string, isOnline: boolean}) {
   return (
     <Link
-      className="hover:cursor-pointer"
+      className="hover:cursor-pointer w-full"
       href={`/dashboard/${id}`}
     >
       <div className="relative">
         {/* Main card with simple glass effect */}
         <Card 
           className={`
-            relative w-full max-w-sm flex flex-col gap-12 overflow-hidden
+            relative w-full flex flex-col gap-12 overflow-hidden
             backdrop-blur-md border-white/20 border-[2px] shadow-lg transition-all duration-700 hover:scale-[1.02]
             ${isOnline 
               ? 'bg-[rgba(255,255,255,0.8)]' 

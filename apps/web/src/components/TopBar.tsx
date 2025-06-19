@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label"
 export const TopBar = async () => {
 
   // const session = await getSession()
-  // if (!session) throw new Error()
+  // if (!session) throw new Error()dd
   
 
   return (

@@ -1,9 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import prisma from '../../../../packages/db/index'
-import { CreateUserDTO } from 'src/DTO/user.dto';
+import { CreateUserDTO, FindUserQueryDTO, UpdateUserDTO } from 'src/DTO/user.dto';
+
 
 @Injectable()
 export class UserService {
+
+  async getUser(userQuery: FindUserQueryDTO) {
+    async function getUserByEmail(email: string) {
+      const user = await prisma.user.findUnique({where:{email}})
+
+      if (!user) return null
+
+      return user
+    }
+    
+    async function getUserById(id: string) {
+      const user = await prisma.user.findUnique({where:{id}})
+
+      if (!user) return null
+
+      return user
+    }
+
+    async function getUserByName(name: string) {
+      const user = await prisma.user.findUnique({where:{name}})
+
+      if (!user) return null
+
+      return user
+    }
+
+    if (Object.keys(userQuery).length === 0 || Object.keys(userQuery).length > 1) {
+      throw new BadRequestException("You must include either name, email, or id of user you're trying to find or do something with")
+    }
+
+    if (userQuery.email) {
+      return await getUserByEmail(userQuery.email)
+    }
+
+    if (userQuery.id) {
+      return await getUserById(userQuery.id)
+    }
+
+    if (userQuery.name) {
+      return await getUserByName(userQuery.name)
+    }
+  }
 
   async createUser(createUserDTO: CreateUserDTO) {
     return await prisma.user.create({
@@ -13,27 +56,25 @@ export class UserService {
     })
   }
 
-  async getUserByEmail(email: string) {
-    const user = await prisma.user.findUnique({where:{email}})
 
-    if (!user) return null
+  async deleteUser(userQuery: FindUserQueryDTO) {
+    const user = await this.getUser(userQuery)
 
-    return user
+    if (!user) { throw new NotFoundException(`User does not exist`) }
+
+    return await prisma.user.delete({ where: {id:user.id} })
   }
 
-    async getUserById(id: string) {
-    const user = await prisma.user.findUnique({where:{id}})
+  async updateUser(pii: FindUserQueryDTO, data: UpdateUserDTO) {
+    const user = await this.getUser(pii)
 
-    if (!user) return null
+    if (!user) {throw new NotFoundException('User does not exist')}
 
-    return user
-  }
-
-    async getUserByName(name: string) {
-    const user = await prisma.user.findUnique({where:{name}})
-
-    if (!user) return null
-
-    return user
+    return await prisma.user.update({
+      where: {id: user.id},
+      data: {
+        ...data
+      }
+    })
   }
 }

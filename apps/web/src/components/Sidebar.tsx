@@ -111,7 +111,7 @@ export function Sidebar({ friends }: { friends: {name:string, id:string, latestC
                 </Dialog>
                 
                 {/* Main Friends List */}
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 flex flex-col gap-3 w-full">
                   {sortedFriends.map(f => (
                     <FriendCard 
                       key={f.id}
