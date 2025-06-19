@@ -5,9 +5,11 @@ import Image from "next/image";
 
 export default function DashboardLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  return (
+
   <div className="w-full h-full">
     <div className="fixed inset-0 -z-10 overflow-hidden">
       <Image
@@ -52,4 +54,5 @@ export default function DashboardLayout({
       </div>
     </div>
   </div>
+  )
 }
