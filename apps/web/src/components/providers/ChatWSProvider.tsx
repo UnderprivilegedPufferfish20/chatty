@@ -1,57 +1,73 @@
 "use client";
 import { refreshToken } from "@/lib/auth";
 import { getSession } from "@/lib/session";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
-// Adjust the type as needed
 type SocketContextType = {
   socket: Socket | null;
 };
 
 const SocketContext = createContext<SocketContextType>({ socket: null });
 
-export const useSocket = () => useContext(SocketContext);
+export const useSocket = () => {
+  return useContext(SocketContext).socket;
+};
 
 export const ChatWSProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [token, setToken] = useState<string | null>(null)
+  const [token, setToken] = useState<string | null>(null);
 
+  // Fetch token on mount
   useEffect(() => {
     const getCreds = async () => {
-      const s = await getSession();
-      if (!s) throw new Error("ChatWSProvider - no session :(");
+      try {
+        const session = await getSession();
+        if (!session) throw new Error("No session found");
 
-      const token = await refreshToken(s.refreshToken)
+        const newToken = await refreshToken(session.refreshToken);
+        if (!newToken) throw new Error("Failed to refresh token");
 
-      if (!token) throw new Error("ChatWSProvider - refreshToken failed :(")
-      
-      setToken(token);
+        setToken(newToken);
+      } catch (error) {
+        console.error("Failed to initialize WebSocket credentials:", error);
+      }
     };
     getCreds();
   }, []);
 
+  // Initialize socket when token is available
   useEffect(() => {
-    // Only create socket connection if we have a session and no existing socket
-    if (token && !socket && typeof window !== "undefined") {
-      const backend = io("http://localhost:8000/chat", {
-        transports: ["websocket"],
-        auth: {
-          token
-        }
-      })
+    if (!token || typeof window === "undefined") return;
 
-      setSocket(backend)
-    }
+    const newSocket = io("http://localhost:8000/chat", {
+      transports: ["websocket"],
+      auth: { token },
+    });
 
+    // Connection events
+    newSocket.on("connect", () => {
+      console.log("✅ Connected to WebSocket server | ID:", newSocket.id);
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("❌ Connection failed:", err.message);
+    });
+
+    newSocket.on("disconnect", (reason) => {
+      console.log("⚠️ Disconnected:", reason);
+    });
+
+    setSocket(newSocket);
+
+    // Cleanup on unmount or token change
     return () => {
-      socket?.disconnect();
+      newSocket.off("connect");
+      newSocket.off("connect_error");
+      newSocket.off("disconnect");
+      newSocket.disconnect();
     };
-  }, [token]); // Add session as dependency
-
-  // useEffect(() => {
-  //   socket?.on('')
-  // }, [socket])
+  }, [token]); // Only re-run if token changes
 
   return (
     <SocketContext.Provider value={{ socket }}>

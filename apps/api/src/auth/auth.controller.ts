@@ -3,7 +3,9 @@ import { GoogleOAuthGuard } from './guards/google.guard';
 import { RefreshAuthGuard } from './guards/refresh.guard';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
+import { Public } from './config/public';
 
+@Public()
 @Controller('auth')
 export class AuthController {
   constructor(

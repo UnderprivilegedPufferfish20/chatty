@@ -34,7 +34,7 @@ export class UserService {
       where: { [dbField]: queryValue } as any,
       include: {
         friends:true,
-        friendsOf: true,
+        friendsOf: true
       }
     });
   }

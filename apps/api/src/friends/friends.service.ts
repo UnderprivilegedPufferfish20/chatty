@@ -59,7 +59,8 @@ export class FriendsService {
 
     if (hasRelId) {
       return await prisma.friendRelation.findUnique({
-        where: { id: q.relId }
+        where: { id: q.relId },
+        include: { chats: { orderBy: { seenAt: 'desc' } }, friend: true, user: true }
       });
     }
   }

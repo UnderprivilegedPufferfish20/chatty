@@ -15,12 +15,14 @@ import { ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
 import { FriendsService } from 'src/friends/friends.service';
 import { NotFoundException } from '@nestjs/common';
+import { transcode } from 'buffer';
 
 @WebSocketGateway({
   namespace: "chat",
   cors: {
     origin: "http://localhost:3000"
-  }
+  },
+  transports: ['websocket']
 })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -37,9 +39,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   afterInit() {
     this.server.use(async (socket: Socket, next) => {
+      console.log("trying to connect...")
       const token = socket.handshake.auth.token;
       
       if (!token) {
+        console.log("Didn't provide token")
         return next(new WsException('Missing authentication token'));
       }
 
@@ -53,7 +57,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       
       try {
         const user = await this.userService.getUser({ id: userId })
-        if (!user) return next(new WsException("User does not exist"));
+        if (!user) return next(new WsException("User does not exist or incorrect jwt"));
 
         
 

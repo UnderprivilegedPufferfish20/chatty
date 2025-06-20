@@ -16,20 +16,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export const TopBar = async () => {
-
-  // const session = await getSession()
-  // if (!session) throw new Error()dd
-  
+export const TopBar = async ({ userName }: { userName:string }) => {
 
   return (
     <div className='w-full p-4 flex items-center justify-between bg-[rgba(255,255,255,0.5)] rounded-xl border-[2px] border-white'>
       <Dialog>
         <form className='pl-6'>
           <DialogTrigger asChild>
-            <div className='hover:border-[3px] hover:border-gray-400 rounded-full'>
-
-              <AnonymousUserIcon size={48}/>
+            <div className='flex gap-2 items-center'>
+              <div className='hover:border-[3px] hover:border-gray-400 rounded-full'>
+                <AnonymousUserIcon size={48}/>
+              </div>
+              <h1 className='font-bold text-xl'>{userName}</h1>
             </div>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
