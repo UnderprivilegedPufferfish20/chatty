@@ -13,6 +13,7 @@ model User {
   name      String           @unique
   email     String           @unique
   pfpURL    String
+  friendCode String          @unique
 
   friends   FriendRelation[] @relation("UserFriends")
   friendsOf FriendRelation[] @relation("FriendOfUser")
@@ -38,8 +39,8 @@ model Chat {
   receiverId   String
   message      String
   sentAt       DateTime @default(now())
-  seen         Boolean
-  seenAt       DateTime?
+  seen         Boolean     @default(false)
+  seenAt       DateTime? 
   attachment   Bytes? 
 
   friendRel FriendRelation @relation(fields: [friendRelId], references: [id])

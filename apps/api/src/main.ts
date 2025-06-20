@@ -7,12 +7,12 @@ const PORT = process.env.PORT!
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true
-    })
-  )
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    disableErrorMessages: false,
+  }));
 
   app.enableCors({
     origin: "http://localhost:3000",

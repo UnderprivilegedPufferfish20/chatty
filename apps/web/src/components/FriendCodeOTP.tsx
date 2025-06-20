@@ -1,77 +1,22 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import { z } from "zod"
+import React, { useActionState } from 'react'
+import { Input } from './ui/input'
+import { addFriend } from '@/lib/actions'
 
-import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp"
-
-const FormSchema = z.object({
-  pin: z.string().min(6, {
-    message: "Must be 6 digits, numbers or letters",
-  }),
-})
-
-export function FriendCodeOTP() {
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      pin: "",
-    },
-  })
-
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    toast("You submitted the following values", {
-      description: (
-        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
-  }
+const FriendCodeOTP = () => {
+  const [state, action] = useActionState(addFriend,undefined)
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
-        <FormField
-          control={form.control}
-          name="pin"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <InputOTP maxLength={6} {...field}>
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit">Add Friend</Button>
-      </form>
-    </Form>
+    <form action={action}>
+      <div className='flex flex-col gap-2'>
+        <Input id='code' name='code' placeholder='6 digits, letters or numbers'/>
+        {state?.error && <p className='text-red-400'>{state.error.code}</p>}
+        {state?.message && <p className='text-green-400'>{state.message}</p>}
+      </div>  
+    </form>
   )
 }
+
+export default FriendCodeOTP
+

@@ -34,4 +34,8 @@ export class FindUserQueryDTO {
   @IsOptional()
   @IsString()
   email?: string
+
+  @IsOptional()
+  @IsString()
+  friendCode?: string
 }

@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import prisma from '../../../../packages/db/index'
 import { UserService } from 'src/user/user.service';
 import { AuthJwtPayload } from 'src/types/jwtPayload';
@@ -14,14 +14,35 @@ export class AuthService {
     @Inject(refreshConfig.KEY) private readonly refreshTokenConfig: ConfigType<typeof refreshConfig>
   ) {}
 
+  private async generateUniqueName(profile:any) {
+    let iter = 0;
+    while (iter <= 100) {
+      const base = profile.firstName.toLowerCase() + (profile.lastName ? profile.lastName.toLowerCase()[0] : profile.email.split('@')[1])
+      const extra = Array.from({length: 6}, () =>
+        "0123456789!"[Math.floor(Math.random() * 10)]
+      ).join('');
+
+      const name = base + extra
+
+      const testIfUnique = await prisma.user.findUnique({ where: { name } });
+
+      if (!testIfUnique) {
+        return name;
+      }
+      iter++;
+    }
+    throw new InternalServerErrorException("Could not generate unique name");
+  }
+
   async handleGoogleLogin(profile:any) {
 
     let user = await this.userService.getUser({email: profile.email});
 
     if (!user) {
+      const name = await this.generateUniqueName(profile)
       user = await this.userService.createUser({
         email: profile.email,
-        name: profile.firstName.toLowerCase() + profile.lastName.toLowerCase()[0] + '123',
+        name,
         pfpURL: profile.picture,
       });
     }

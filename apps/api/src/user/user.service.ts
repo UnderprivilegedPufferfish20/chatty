@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import prisma from '../../../../packages/db/index'
 import { CreateUserDTO, FindUserQueryDTO, UpdateUserDTO } from 'src/DTO/user.dto';
 
@@ -7,51 +7,63 @@ import { CreateUserDTO, FindUserQueryDTO, UpdateUserDTO } from 'src/DTO/user.dto
 export class UserService {
 
   async getUser(userQuery: FindUserQueryDTO) {
-    async function getUserByEmail(email: string) {
-      const user = await prisma.user.findUnique({where:{email},include:{friends:true,friendsOf:true}})
-
-      if (!user) return null
-
-      return user
-    }
-    
-    async function getUserById(id: string) {
-      const user = await prisma.user.findUnique({where:{id},include:{friends:true,friendsOf:true}})
-
-      if (!user) return null
-
-      return user
+    const queryKeys = Object.keys(userQuery);
+    if (queryKeys.length !== 1) {
+      throw new BadRequestException(
+        "You must include exactly one of: name, email, friendCode, or id"
+      );
     }
 
-    async function getUserByName(name: string) {
-      const user = await prisma.user.findUnique({where:{name},include:{friends:true,friendsOf:true}})
+    // Map query fields to database fields
+    const fieldMap = {
+      email: 'email',
+      id: 'id', 
+      name: 'name',
+      friendCode: 'friendCode'
+    };
 
-      if (!user) return null
+    const [queryField] = queryKeys;
+    const dbField = fieldMap[queryField as keyof typeof fieldMap];
+    const queryValue = userQuery[queryField as keyof FindUserQueryDTO];
 
-      return user
+    if (!dbField) {
+      throw new BadRequestException("Invalid query field");
     }
 
-    if (Object.keys(userQuery).length === 0 || Object.keys(userQuery).length > 1) {
-      throw new BadRequestException("You must include either name, email, or id of user you're trying to find or do something with")
-    }
-
-    if (userQuery.email) {
-      return await getUserByEmail(userQuery.email)
-    }
-
-    if (userQuery.id) {
-      return await getUserById(userQuery.id)
-    }
-
-    if (userQuery.name) {
-      return await getUserByName(userQuery.name)
-    }
+    return await prisma.user.findUnique({
+      where: { [dbField]: queryValue } as any,
+      include: {
+        friends:true,
+        friendsOf: true,
+      }
+    });
   }
 
+  private async generateFriendCode() {
+    let iter = 0;
+    while (iter <= 100) {
+      const code = Array.from({length: 6}, () =>
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[Math.floor(Math.random() * 36)]
+      ).join('');
+
+      const testIfUnique = await prisma.user.findUnique({ where: { friendCode: code } });
+
+      if (!testIfUnique) {
+        return code;
+      }
+      iter++;
+    }
+    throw new InternalServerErrorException("Could not generate unique friend code");
+  }
+
+
   async createUser(createUserDTO: CreateUserDTO) {
+    const code = await this.generateFriendCode()
+
     return await prisma.user.create({
       data:{
-        ...createUserDTO
+        ...createUserDTO,
+        friendCode: code
       },
       include: {friends:true,friendsOf:true}
     })

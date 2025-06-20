@@ -39,27 +39,48 @@ export const refreshToken = async (oldRefToken: string) => {
   }
 }
 
-export const authFetch = async (url: string |URL, options: FetchOptions = {}) => {
-  const session = await getSession()
-
+export const authFetch = async (url: string | URL, options: FetchOptions = {}) => {
+  const session = await getSession();
   if (!session) throw new Error("Auth fetch - no session");
 
   options.headers = {
     ...options.headers,
-    Authorization: `Bearer ${session.accessToken}`
-  }
+    "Authorization": `Bearer ${session.accessToken}`,
+    "Content-Type": 'application/json'
+  };
 
-  let response = await fetch(url, options)
+  let response = await fetch(url, options);
+
 
   if (response.status === 401) {
-    if (!session?.refreshToken) throw new Error('ref token not found');
-
-    const newAccessToken = await refreshToken(session.refreshToken)
-
+    if (!session?.refreshToken) throw new Error('Refresh token not found');
+    
+    const newAccessToken = await refreshToken(session.refreshToken);
     if (newAccessToken) {
-      options.headers.Authorization = `Bearer ${newAccessToken}`
-      response = await fetch(url, options)
+      options.headers.Authorization = `Bearer ${newAccessToken}`;
+      response = await fetch(url, options);
     }
   }
-  return response
-}
+
+
+  const contentType = response.headers.get('content-type');
+  const contentLength = response.headers.get('content-length');
+
+  if (contentLength === '0' || response.status === 204) {
+    return null;
+  }
+  
+
+  if (!contentType?.includes('application/json')) {
+    return await response.text();
+  }
+
+
+  try {
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  } catch (error) {
+    console.error('Failed to parse JSON:', error);
+    throw new Error('Invalid JSON response');
+  }
+};

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog"
 
 import GenericIcon from "./Icon"
-import { FriendCodeOTP } from "./FriendCodeOTP"
+import FriendCodeOTP from "./FriendCodeOTP"
 
 export function AddFriendButton() {
   return (

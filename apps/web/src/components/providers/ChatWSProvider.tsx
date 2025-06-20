@@ -1,7 +1,6 @@
 "use client";
 import { refreshToken } from "@/lib/auth";
 import { getSession } from "@/lib/session";
-import { Session } from "@/lib/types";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
@@ -15,7 +14,7 @@ const SocketContext = createContext<SocketContextType>({ socket: null });
 export const useSocket = () => useContext(SocketContext);
 
 export const ChatWSProvider = ({ children }: { children: React.ReactNode }) => {
-  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
@@ -34,22 +33,28 @@ export const ChatWSProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Only create socket connection if we have a session and no existing socket
-    if (token && !socketRef.current && typeof window !== "undefined") {
-      socketRef.current = io("http://localhost:8000/chat", {
+    if (token && !socket && typeof window !== "undefined") {
+      const backend = io("http://localhost:8000/chat", {
         transports: ["websocket"],
         auth: {
           token
         }
-      });
+      })
+
+      setSocket(backend)
     }
 
     return () => {
-      socketRef.current?.disconnect();
+      socket?.disconnect();
     };
   }, [token]); // Add session as dependency
 
+  // useEffect(() => {
+  //   socket?.on('')
+  // }, [socket])
+
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current }}>
+    <SocketContext.Provider value={{ socket }}>
       {children}
     </SocketContext.Provider>
   );
