@@ -107,15 +107,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const friendRel = await this.friendsService.findOne({ personOneID: socket.data.user.id, personTwoID: data.friendId })
     if (!friendRel) throw new NotFoundException(`User ${socket.data.user.id} joined chat room with ${data.friendId}, but they aern't friends`);
 
-    this.server.emit('new_message', { to: data.friendId, message: data.message, attachemnt: data.attachment })
-
-    await this.chatsService.createChat({
+    const chat = await this.chatsService.createChat({
       friendRelId: friendRel.id,
       message: data.message,
       attachment: data.attachment,
       senderId: socket.data.user.id,
       receiverId: friendRel.friendId === socket.data.user.id ? friendRel.userId : friendRel.friendId
     })
+    this.server.emit('new_message', { to: data.friendId, from: socket.data.user.id, message: chat })
+
 
   }
 

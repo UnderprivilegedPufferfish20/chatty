@@ -22,7 +22,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useEffect, useMemo, useState } from "react"
 import { FriendCard } from './FriendCard'
-import Image from "next/image"
 import GenericIcon from "./Icon"
 import { useSocket } from "./providers/ChatWSProvider"
 
@@ -33,15 +32,6 @@ export function Sidebar({ friends }: { friends: {name:string, id:string, latestC
 
 
   const socket = useSocket();
-
-
-  useEffect(() => {
-    if (socket) {
-      console.log('Socket connected:', socket.connected);
-      console.log('Current friends:', friends.map(f => ({ id: f.id, name: f.name })));
-    }
-  }, [socket, friends]);
-
 
   useEffect(() => {
   if (!socket) return;
