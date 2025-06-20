@@ -29,12 +29,12 @@ import { useSocket } from "./providers/ChatWSProvider"
 export function Sidebar({ friends }: { friends: {name:string, id:string, latestChat:string, pfpUrl?: string}[] }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [idsOfOnline, setIdsOfOnline] = useState<string[]>([])
+  const [idsOfOnline, setIdsOfOnline] = useState<Set<string>>(new Set())
 
-  // Get socket - but don't return early yet
+
   const socket = useSocket();
 
-  // Debug: Log socket connection status
+
   useEffect(() => {
     if (socket) {
       console.log('Socket connected:', socket.connected);
@@ -42,48 +42,41 @@ export function Sidebar({ friends }: { friends: {name:string, id:string, latestC
     }
   }, [socket, friends]);
 
-  // Call ALL hooks before any conditional returns
+
   useEffect(() => {
-    // Only set up listeners if socket exists
-    if (!socket) return;
+  if (!socket) return;
 
-    // Add cleanup for event listeners
-    const handleUserOnline = (data: { id: string }) => {
-      console.log('User came online:', data); // Debug log
-      if (friends.map(f => f.id).includes(data.id)) {
-        setIdsOfOnline(prev => {
-          // Prevent duplicates
-          if (prev.includes(data.id)) return prev;
-          console.log('Adding online user:', data.id); // Debug log
-          return [...prev, data.id];
-        });
-      }
-    };
+  // Request initial status when connected
+  const handleConnect = () => {
+    socket.emit('request_online_status');
+  };
 
-    const handleUserLoggedOff = (data: { id: string }) => {
-      console.log('User went offline:', data); // Debug log
-      setIdsOfOnline(prev => {
-        if (prev.includes(data.id)) {
-          console.log('Removing offline user:', data.id); // Debug log
-          return prev.filter(id => id !== data.id);
-        }
-        return prev;
-      });
-    };
+  // Update to handle array input
+  const handleOnlineStatusChange = (data: { idsOnline: string[] }) => {
+    const friendsIdSet = new Set(friends.map(f => f.id));
+    const newIdsOnline = new Set(
+      data.idsOnline.filter(id => friendsIdSet.has(id))
+    );
+    setIdsOfOnline(newIdsOnline);
+  };
 
-    socket.on('user_online', handleUserOnline);
-    socket.on('user_logged_off', handleUserLoggedOff);
+  socket.on('connect', handleConnect);
+  socket.on('user_online_status_change', handleOnlineStatusChange);
 
-    // Cleanup listeners on unmount
-    return () => {
-      socket.off('user_online', handleUserOnline);
-      socket.off('user_logged_off', handleUserLoggedOff);
-    };
-  }, [socket, friends]); // Removed idsOfOnline from dependencies to prevent re-registering listeners
+  // Request initial status if already connected
+  if (socket.connected) {
+    socket.emit('request_online_status');
+  }
+
+  return () => {
+    socket.off('connect', handleConnect);
+    socket.off('user_online_status_change', handleOnlineStatusChange);
+  };
+}, [socket, friends]);; 
 
   const sortedFriends = useMemo(
-    () => friends.slice().sort((a, b) => (idsOfOnline.includes(b.id) === idsOfOnline.includes(a.id) ? 0 : idsOfOnline.includes(b.id) ? 1 : -1)),
-    [friends, idsOfOnline] // Added idsOfOnline to dependencies
+    () => friends.slice().sort((a, b) => (idsOfOnline.has(b.id) === idsOfOnline.has(a.id) ? 0 : idsOfOnline.has(b.id) ? 1 : -1)),
+    [friends, idsOfOnline] 
   )
 
   const filteredFriends = useMemo(() => {
@@ -93,7 +86,7 @@ export function Sidebar({ friends }: { friends: {name:string, id:string, latestC
     )
   }, [sortedFriends, searchTerm])
 
-  // NOW we can handle the loading state after all hooks are called
+
   if (!socket) {
     return (
       <Card className="w-full bg-[rgba(255,255,255,0.5)] border-[2px] border-white">
@@ -158,7 +151,7 @@ export function Sidebar({ friends }: { friends: {name:string, id:string, latestC
                               <FriendCard 
                                 name={f.name}
                                 latestChat={f.latestChat}
-                                isOnline={idsOfOnline.includes(f.id)}
+                                isOnline={idsOfOnline.has(f.id)}
                                 id={f.id}
                                 key={f.id}
                               />
@@ -180,7 +173,7 @@ export function Sidebar({ friends }: { friends: {name:string, id:string, latestC
                     <FriendCard 
                       key={f.id}
                       name={f.name}
-                      isOnline={idsOfOnline.includes(f.id)}
+                      isOnline={idsOfOnline.has(f.id)}
                       latestChat={f.latestChat}
                       id={f.id}
                     />

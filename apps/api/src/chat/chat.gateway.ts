@@ -15,7 +15,6 @@ import { ChatService } from './chat.service';
 import { UserService } from 'src/user/user.service';
 import { FriendsService } from 'src/friends/friends.service';
 import { NotFoundException } from '@nestjs/common';
-import { transcode } from 'buffer';
 
 @WebSocketGateway({
   namespace: "chat",
@@ -28,7 +27,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @WebSocketServer()
   server: Server;
 
-  private socketIdToUserId = new Map<string, string>()
+  private idsOnline = new Set<string>()
 
   constructor(
     private jwtService: JwtService,
@@ -59,11 +58,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         const user = await this.userService.getUser({ id: userId })
         if (!user) return next(new WsException("User does not exist or incorrect jwt"));
 
-        
-
-        this.socketIdToUserId.set(socket.id, userId)
-
-
         socket.data.user = user
 
         next();
@@ -73,18 +67,33 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     });
   }
 
+  @SubscribeMessage('request_online_status')
+  handleRequestOnlineStatus(@ConnectedSocket() socket: Socket) {
+    socket.emit('user_online_status_change', {
+      idsOnline: Array.from(this.idsOnline)
+    });
+  }
+
   handleConnection(
     @ConnectedSocket() socket: Socket
   ) {
     console.log(`User with ID of ${socket.data.user.id} is online.`)
 
-    this.server.emit('user_online', { id: socket.data.user.id })
+    this.idsOnline.add(socket.data.user.id)
+
+    this.server.emit('user_online_status_change', { 
+      idsOnline: Array.from(this.idsOnline) 
+    });
   }
 
   handleDisconnect(socket: Socket) {
     console.log(`User ${socket.data.user.id} has logged off`)
 
-    this.server.emit('user_logged_off', { id: socket.data.user.id })
+    this.idsOnline.delete(socket.data.user.id)
+
+    this.server.emit('user_online_status_change', { 
+      idsOnline: Array.from(this.idsOnline) 
+    });
   }
 
 
